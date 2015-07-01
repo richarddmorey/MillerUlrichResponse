@@ -1,4 +1,53 @@
-\documentclass[jou,a4paper,floatsintext,draftfirst]{apa6}
+\documentclass[jou,a4paper,floatsintext,draftfirst]{apa6}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
 %\documentclass[fignum,nobf,doc]{apa}
 
 \def\citeapos#1{\citeauthor{#1}'s (\citeyear{#1})}
@@ -70,18 +119,12 @@
 \renewcommand{\sourceflush}{flushleft}
 
 \authornote{Address correspondence to Richard D. Morey (richarddmorey@gmail.com). We thank All code and the source for this document are available at \url{https://github.com/richarddmorey/MillerUlrichResponse}. Draft date: \today.}
-
-
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 \begin{document}
 
 \maketitle
 
-<<results='hide',echo=FALSE,message=FALSE,warning=FALSE>>=
-options(digits = 2)
-library(xtable)
-set.seed(1234)
 
-@
 
 
 Knowing how to interpret confidence intervals is critical to researchers who encounter and use confidence intervals, and in debates over the usefulness of various statistical methods. In our paper \citep{Hoekstra:etal:2014}, we showed that incorrect interpretations of confidence intervals (CIs) were frequently endorsed by researchers, master students, and by first year students with limited knowledge of inferential statistics. We concluded that these errors in interpretation imply a widespread misunderstanding of the role, affordances, and use of CIs. \citet{Miller:Ulrich:inpress}, however, argue that some of the statements we considered incorrect could in fact be considered correct, given a particular interpretation of probability and confidence. We demonstrate that their argument is flawed, and that Miller and Ulrich (henceforth, MU) unintentionally underscore our case that the interpretation of CIs is conceptually difficult and often misunderstood.
@@ -124,86 +167,13 @@ Statements~1,~3, and~4 are incorrect by any commonly taught definition of probab
 
 Suppose, however, that MU are correct, and respondents were substituting tautologically true statement~4' for our statement~4. Is~4' a suitable substitution for 4? The answer is ``no'', regardless of one's interpretation of the word probability {\em so long as that definition conforms to the requirements of the laws of probability.} To see why, one must understand two facts: first, there are many confidence procedures for the same problem, all with the same confidence coefficient but yielding different intervals; second, a given confidence interval can arise from two different confidence procedures, each with different confidence coefficients. This lack of unique inferences has been known since the inception of confidence interval theory. Fisher, for instance, in the discussion of the Neyman's first paper including CI theory, stated that CI theory ``had been erected at considerable expense, and it was perhaps as well to count the cost. The first item to which [Fisher] would call attention was the loss of uniqueness in the result, and the consequent danger of apparently contradictory inference.'' \citep[][discussion at p. 618]{Neyman:1934}.
 
-<<refclass,echo=FALSE,fig.cap="The reference class problem. A: Three nested confidence intervals, all computed from confidence procedures with the same 95\\% probability of including the true value. B: Excerpts from four sequences of applications of the confidence procedures in Panel~A. Each letter represents computation of an interval with a different confidence coefficient; ``X'' represents a 95\\% interval, ``Y'' represents a 99\\% interval, and ``Z'' represents a 91\\% interval. The rectangle shows how the same confidence interval can be seen as a sample from two sequences, each with different probabilities of containing the true value.",fig.width=10,fig.height=5>>=
-ci.survey = c(.1,.4)
-N = 10
-xbar = mean(ci.survey)
-tstar_95 = qt(.975, N-1)
-tstar_91 = qt(.955, N-1)
-tstar_99 = qt(.995, N-1)
-
-s = diff(ci.survey)/2 *sqrt(N)/tstar_95
-
-ci_95 = xbar + c(-1,1)*tstar_95*s/sqrt(N)
-ci_91 = xbar + c(-1,1)*tstar_91*s/sqrt(N)
-ci_99 = xbar + c(-1,1)*tstar_99*s/sqrt(N)
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+\includegraphics[width=\maxwidth]{figure/refclass-1} \caption[The reference class problem]{The reference class problem. A: Three nested confidence intervals, all computed from confidence procedures with the same 95\% probability of including the true value. B: Excerpts from four sequences of applications of the confidence procedures in Panel~A. Each letter represents computation of an interval with a different confidence coefficient; ``X'' represents a 95\% interval, ``Y'' represents a 99\% interval, and ``Z'' represents a 91\% interval. The rectangle shows how the same confidence interval can be seen as a sample from two sequences, each with different probabilities of containing the true value.}\label{fig:refclass}
+\end{figure}
 
 
-theta = 0
-
-seq.len = 20
-
-par(mar=c(5,0,0,0), mfrow = c(1,2))
-plot(1,1, ty = 'n', ylim = c(0,1), xlim = c(-1,1), axes=FALSE, ylab = "", xlab = "Mean")
-
-arrows(ci_95[1], 3/5,ci_95[2], 3/5, code = 3, angle=90, len = .1)
-arrows(ci_91[1], 2/5,ci_91[2], 2/5, code = 3, angle=90, len = .1)
-arrows(ci_99[1], 4/5,ci_99[2], 4/5, code = 3, angle=90, len = .1)
-arrows(ci_91[1], 1/5,ci_91[2], 1/5, code = 3, angle=90, len = .1)
-
-
-text(-1,4/5,"CP-D:", adj=0)
-text(-1,3/5,"CP-A:", adj=0)
-text(-1,2/5,"CP-E:", adj=0)
-text(-1,1/5,"CP-C:", adj=0)
-
-axis(1)
-
-mtext("A", 3, adj=.95,-1.5, cex=1.5)
-box()
-
-#abline(v = 0, col="gray", lty=1)
-abline(v = xbar, col="gray", lty=2)
-
-points(rep(xbar,4), (1:4)/5, pch=21, col="black", bg="lightblue")
-
-par(mar=c(5,0,0,0))
-plot(1,1, ty = 'n', ylim = c(0,1), xlim = c(0,1), axes=FALSE, ylab = "", xlab = "")
-
-xpts = seq(.1,.70,len=seq.len)
-xwidth=diff(xpts)[1] * 1.1
-
-points(xpts, rep(3/5,seq.len), pch="X")
-text(c(xpts[1] - xwidth, xpts[seq.len] + xwidth), rep(3/5,2), expression(cdots))
-
-whichCI = sample(1:2,seq.len, replace =TRUE)
-
-points(xpts, rep(2/5,seq.len), pch=c("Y","Z")[whichCI]) 
-text(c(xpts[1] - xwidth, xpts[seq.len] + xwidth), rep(2/5,2), expression(cdots))
-
-points(xpts, rep(4/5,seq.len), pch=c("Z","Y")[whichCI])
-text(c(xpts[1] - xwidth, xpts[seq.len] + xwidth), rep(4/5,2), expression(cdots))
-
-points(xpts, rep(1/5,seq.len), pch="Z")
-text(c(xpts[1] - xwidth, xpts[seq.len] + xwidth), rep(1/5,2), expression(cdots))
-
-
-
-text(1,4/5,"Pr(in)=95%", adj=1)
-text(1,2/5,"Pr(in)=95%",adj=1)
-text(1,3/5,"Pr(in)=95%", adj=1)
-text(1,1/5,"Pr(in)=91%", adj=1)
-
-first.z = which(whichCI==2)[1]
-
-ymarg = .05
-
-rect(xpts[first.z] - xwidth/2, 1/5 - ymarg, xpts[first.z] + xwidth/2, 2/5 + ymarg, border="red")
-
-box()
-mtext("B", 3, adj=.95,-1.5, cex=1.5)
-
-@
+\end{knitrout}
 
 We can demonstrate this using multiple confidence procedures. Suppose we have a method for constructing CIs with any given confidence coefficient: our only requirement is that the width of the CI is an increasing function of the confidence coefficient, which is true of most confidence procedures in common use. We denote as Confidence Procedure A (CP-A) a CP constructed with a confidence coefficient of 95\%. We can construct another 95\% confidence procedure by randomly combining two confidence intervals with different confidence coefficients. For instance, let CP-B and CP-C be intervals with $\alpha=.01$ and .09, respectively; that is, CPB and CPC are respectively 99\% and 91\% confidence procedures. We define two more 95\% confidence procedures, CP-D and CP-E:
 	\begin{itemize}
