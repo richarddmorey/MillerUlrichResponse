@@ -1,4 +1,4 @@
-\documentclass[jou,a4paper,floatsintext,draftfirst]{apa6}
+\documentclass[jou,a4paper,floatsintext]{apa6}
 %\documentclass[fignum,nobf,doc]{apa}
 
 \def\citeapos#1{\citeauthor{#1}'s (\citeyear{#1})}
@@ -6,17 +6,21 @@
 \def\bfy{{\mathbf y}}
 \def\bftheta{{\boldsymbol\theta}}
 
-
 \usepackage{epigraph}
 \usepackage{graphicx}
 \usepackage{amsfonts}
 \usepackage{amsbsy}
+\usepackage{amsthm}
 %\usepackage{setspace}
 %\usepackage{pdfcomment}
 %\usepackage{xspace}
 \usepackage{color,amsmath,amssymb}
 %\usepackage{framed}
 \usepackage{enumerate}
+
+\newtheoremstyle{named}{}{}{\itshape}{}{\bfseries}{.}{.5em}{#1 \thmnote{#3}}
+\theoremstyle{named}
+\newtheorem*{namedtheorem}{Statement}
 
 \usepackage[american]{babel}
 \usepackage{csquotes}
@@ -32,8 +36,7 @@
 \bibliography{lab}
 %\AtEveryBibitem{\clearfield{url}} 
 
-\abstract{Miller and Ulrich (in press) critique our claim \citep{Hoekstra:etal:2014}, based on a survey given to researchers and students, that even seasoned researchers have difficulty interpreting confidence intervals (CIs). They suggest that survey respondents may have interpreted the statements in the survey that we deemed incorrect in an idiosyncratic, but correct, way, thus calling into question the conclusion that the results indicate that respondents could not properly interpret CIs. We show, however, that their ``interpretations'' are trivial restatements of the definitions of confidence procedures; further, although they are tautologically correct by themselves, they cannot be correct interpretations of the statements in the survey. Miller and Ulrich have unintentionally underscored our main point: confidence intervals are counter-intuitive, and even seasoned researchers get it wrong.}
-
+\abstract{Miller and Ulrich (in press) critique our claim \citep{Hoekstra:etal:2014}, based on a survey given to researchers and students, of widespread misunderstanding of confidence intervals (CIs). They suggest that survey respondents may have interpreted the statements in the survey that we deemed incorrect in an idiosyncratic, but correct, way, thus calling into question the conclusion that the results indicate that respondents could not properly interpret CIs. Their alternative interpretations, while correct, cannot be deemed acceptable renderings of the questions in the survey due to the well-known reference class problem. Moreover, there is no support in the data for their contention that participants may have had their alternative interpretations in mind. Finally, their alternative interpretations are merely trivial restatements of the definition of a confidence interval, and have no implications for the location of a parameter.}
 
 \rightheader{Misinterpreting intervals}
 \shorttitle{Continued misinterpretation of intervals}
@@ -81,161 +84,305 @@ options(digits = 2)
 library(xtable)
 set.seed(1234)
 
+## Load data
+library(xlsx)
+
+data = read.csv('../../RM_analysis/RM.Dec4.2012.csv')
+colnames(data) = c("Q1","Q2","Q3","Q4","Q5","Q6","expertise")
+data$group = "GroningenFaculty"
+
+
+
+resTil <- read.xlsx("../../Vragenlijst CI EJ/Vragenlijst CI docenten tilburg.xlsx", 1)
+resUvAStudents <- read.xlsx("../../Vragenlijst CI EJ/Vragenlijst CI eerstejaars.xlsx", 1)
+resUvAFac <- read.xlsx("../../Vragenlijst CI EJ/Vragenlijst CI medewerkers UvA.xlsx", 1)
+resUvAMaster <- read.xlsx("../../Vragenlijst CI EJ/Vragenlijst CI studenten SWaP.xlsx", 1)
+# Add group column (replace the notes)
+resTil[,8] = "TilburgFaculty"
+resUvAStudents[,8] = "UvAStudents"
+resUvAFac[,8] = "UvAFaculty"
+resUvAMaster[,8] = "UvAMasters"
+# Make column names
+
+colnames(resTil) = colnames(data)
+colnames(resUvAStudents) = colnames(data)
+colnames(resUvAFac) = colnames(data)
+colnames(resUvAMaster) = colnames(data)
+
+allEJ <- rbind(resTil,resUvAStudents,resUvAFac,resUvAMaster)
+data <- rbind(data,allEJ)
+
+# Remove anyone who has NSs in the first 6 cols
+data <- data[rowSums(is.na(data[,1:6]))==0,]
+
+data$Nendorsed = rowSums(data[,1:6])
+
+dataNoStudents = data[data$group!="UvAStudents",]
+
+
 @
 
 
-Knowing how to interpret confidence intervals is critical to researchers who encounter and use confidence intervals, and in debates over the usefulness of various statistical methods. In our paper \citep{Hoekstra:etal:2014}, we showed that incorrect interpretations of confidence intervals (CIs) were frequently endorsed by researchers, master students, and by first year students with limited knowledge of inferential statistics. We concluded that these errors in interpretation imply a widespread misunderstanding of the role, affordances, and use of CIs. \citet{Miller:Ulrich:inpress}, however, argue that some of the statements we considered incorrect could in fact be considered correct, given a particular interpretation of probability and confidence. We demonstrate that their argument is flawed, and that Miller and Ulrich (henceforth, MU) unintentionally underscore our case that the interpretation of CIs is conceptually difficult and often misunderstood.
+Understanding how to interpret confidence intervals is critical to researchers. In the current climate of methodological introspection, it is essential that we understand methods in order to decide whether these methods are worthwhile. In our paper \citep[][henceforth HMRW]{Hoekstra:etal:2014}, we presented results from a survey with six statements about confidence intervals, all of which we claimed were false. These six false statements were endorsed at high rates, which we took as evidence that survey respondents had deep misunderstandings of confidence intervals. 
 
-MU's argument fails for three reasons: first, the interpretation of confidence intervals they suggest is actually no interpretation at all, but instead is a trivial restatement of the definition of a confidence interval; second, to adopt their interpretation as justifying the probability statements we labeled as incorrect would lead to contradiction of the laws of probability and non-unique assignments of confidence (regardless of the interpretations of those terms); and third, that their faith that writers on statistics truly understand confidence intervals is misplaced.
-	
-We begin by drawing a helpful distinction between a confidence procedure (CP) and a confidence interval; a confidence procedure generates confidence intervals when supplied with data; a 95\% confidence procedure is a procedure that generates intervals that contain the true value of interest 95\% of the time. A confidence interval is a realization from a confidence procedure. The basic defining property of confidence intervals as realizations of procedures was introduced by \citet{Neyman:1934,Neyman:1937} who laid the foundations of confidence interval theory. MU do not disagree with us on the definition of confidence intervals; their disagreement with us involves what interpretations of confidence intervals are acceptable. It is worth emphasizing that the points we make about confidence intervals, and probability in general, are not controversial from the the point of view of statistical theory; they have been emphasized by frequentist and Bayesian philosophers and statisticians since the inception of CI theory in the 1930s. Readers interested in a more thorough treatment of CI theory are referred to \citet{Morey:etal:unpublished}.
+\citet[][henceforth MU]{Miller:Ulrich:inpress}, however, argue that some of the statements we considered incorrect could be ``appropriate under other meanings of `probability' that are in common use'' (Miller \& Ulrich, in press, p. XX); hence, they argue that our conclusion does not follow. In this response to MU, we address two related questions: first, are MU correct that some of the statements in HMRW could be considered correct by a mere reinterpretation of the wording? Second, to what extent do the data show responding consistent with MU's interpretation? We will show that the reason why the statements are false is deeper than any interpretation of the word ``probability''. Further, the data show strong evidence of confusion over confidence intervals, and no evidence that participants were responding as MU would predict, even if MU were correct about the interpretation of CIs.
 
-\section{A trivial interpretation}
+It is worth emphasizing that the points we make about confidence intervals, and probability in general, are not controversial from the the point of view of statistical theory; they have been emphasized by frequentist and Bayesian philosophers and statisticians since the inception of CI theory in the 1930s, even by the authors cited by MU \citep{Robinson:1975,Robinson:1979,Dempster:1964,deGroot:Schervish:2012}. The literature on this topic is vast and stretches back a century. In this response, we only just touch on it. In another article, we give a more in-depth treatment to the topic of confidence interval theory \citep{Morey:etal:unpublished}. We have intentionally chosen here to avoid repetition of the material in that article; readers will thus benefit from reading both articles.
 
-MU take issue in particular with several statements in our survey that we said were incorrect; they assert that if the survey respondents had a definition of probability other than a frequentist one, our statements 1, 3, 4, and 5 need not be read as incorrect. MU offer alternative statements 1', 3', and 4' that they say could be the way that respondents interpreted confidence intervals (pps 7 and 14). MU suggest that perhaps survey respondents understood, for example, 4 as 4' and, because 4' is not incorrect, this should not be taken as evidence that they misunderstand confidence intervals. MU's alternative statements have the interesting property that they are all trivially true, regardless of the observed data: in fact, they are mere restatements of the definition of a confidence procedure. Although MU state that ``Any interpretation of sample data should in some way summarize the information provided by the sample'' (p. 6), their correct ``interpretations'' amount to tautologies that do not summarize the information provided by the data in any way.
+\section{Can we be 95\% bunky?}
+MU are correct that much of the confusion about probability and confidence intervals is due to word choice. Both the word ``probability'' and the word ``confidence'' have meanings outside of their technical ones in frequentist statistics. In fact, commentators on CI theory have noted that this is part of the problem \citep{Dempster:1964,Mayo:1981,Morey:etal:unpublished}; users of CIs, for instance, incorrectly believe that ``confidence'' can be understood in its lay sense.
 
-Consider MU's statement 4' for a $CI_{95\%}$ of $[.1, .4]$ (``If the current sample is one of the 95\% of all samples with relatively small values of $|\bar{X}-\mu|/S$, then $\mu$ lies in the interval $0.1-0.4$'', p. 7).\footnote{We leave aside the fact that the survey purposefully never said how the CI for the mean was constructed. MU assume a particular confidence interval --- one constructed for the mean of a normal distribution using the sample mean and standard deviation --- but the point of the survey was to ask about the implication of an interval being a confidence interval, not of being a {\em particular kind} of confidence interval.} Let ``relatively small'' mean that $|\bar{X}-\mu|/S<c$ for some positive value $c$. Then a bit of algebra yields 
+In their survey, HMRW offered a 95\% confidence interval for a mean of $[.1,.4]$ --- not giving any information about how it was derived --- and then asked whether six statements followed from that information. For instance, statement~4 was:
+\begin{namedtheorem}[4 (HMRW)]
+There is a 95\% probability that the true mean lies between 0.1 and 0.4.
+\end{namedtheorem}
+This statement does not follow from the information given under any common definition of probability, and so we took endorsement of this statement as indicating that participants misunderstood confidence intervals. HMRW briefly explained that statement~4 was one of several statements that ``assign probabilities to parameters or hypotheses, something that is not allowed within the frequentist framework.'' MU admit that ``statement 4 is incompatible with a strict frequentist interpretation in which the current CI is regarded as a single isolated instance,'' and give a brief review of commentators explaining that the frequentist probability that an observed interval contains the true value is either 0 or 1, but imply that a mere reinterpretation of the word ``probability'' suffices to make the statement acceptable.
+
+MU's review, however, does not explain clearly {\em why} frequentists made such proscriptions in the first place. They refer to ``strict frequentists,'' conjuring the image of an overbearing parent trying to keep their child from using vernacular. This gives a false impression that the disagreements between frequentists, Bayesians, and others are merely linguistic. They are not. Interpretation of confidence intervals is limited by a fundamental philosophical issue that is much deeper than a linguistic one.
+
+We begin by reviewing the concept of a confidence procedure. A confidence procedure (CP) is a procedure that generates confidence intervals. A confidence procedure is said to have a confidence coefficient of $X\%$ if, in repeated sampling, $X\%$ of intervals would contain the true parameter value for all values of the true value \citep{Neyman:1937}. Confidence procedures themselves are conceptually very clear. The confidence coefficient is a so-called ``pre-data'' measure of the uncertainty that we have in whether an interval will contain the true value. All the disagreement comes after an interval is computed. How do we then interpret a 95\% confidence interval? Does it have a 95\% probability of containing the true value? \citet{Neyman:1937} says ``Consider now the case when a sample...is already drawn and the [confidence interval] given...Can we say that in this particular case the probability of the true value of [the parameter] falling between [the limits] is equal to [$X\%$]? The answer is obviously in the negative'' (p. 349). Neyman is saying that the confidence coefficient is not to be used as a ``post-data'' probability; that is, an assessment of the probability that the specific interval computed from the data, includes the true value.
+
+MU would have us believe that Neyman's negative answer is merely because of his ``strict frequentist'' definition of probability. In truth, the problem is deeper. Statisticians of the era were well aware of a basic fact: attempts to associate properties of individual events with long-run frequencies suffer from what is called the {\em reference class problem} \citep{Reichenbach:1949,Venn:1888,vonMises:1957}. To understand the reference class problem, consider the question of assessing the probability that a particular African-American women, Jane, will die of cancer. All frequencies consist of a numerator and a denominator: the numerator gives the number of events consistent with the property in question --- in this case, dying of cancer --- and the denominator gives the ``reference class'' of events that could have had that property. To determine the probability that Jane will die of cancer we need a reference class. We might choose as a reference class ``women'', in which case we would accept the long-run relative frequency with which women die of cancer as our probability. Or, we might choose ``African-Americans'' as our reference class. Either one can be chosen as the probability that {\em Jane herself} will die of cancer, but which one? The two reference classes will lead to different probabilities. 
+
+We might then attempt to resolve the contradiction by looking at the long-run frequency with which African-American women die of cancer. This will yield yet a third probability, different from the first two. But Jane is not just an African-American woman; she also has a particular profession, lives in a particular nation, province, city, and neighborhood. All these reference classes, and their combinations, will yield a different probability. The most specific reference class contains only Jane herself, and she will either die of cancer or not. 
+
+The above example, adapted from \citet{Venn:1888}, makes clear the broad implications of the reference class problem. As \citet{Pinker:1999}, said, problems such as these ``are not academic; they affect every decision we make'' (p. 349). The reference class problem is the reason why frequentists do not specify associate long-run uncertainties with individual events. The question always arises, ``which long run?''  
+
+With confidence intervals, as with Jane, there are many long runs to choose from. For any given estimation problem, there will be many methods of constructing a confidence interval. These methods will yield different intervals with the same confidence coefficient \citep[e.g.,][]{Morey:etal:unpublished,Neyman:1952}. Likewise, one can obtain the same interval via multiple confidence procedures, each with different confidence coefficients \citep[e.g.,][]{Pearson:1939}. The multiplicity of ways that ``confidence'' can be associated with the same interval causes a reference class problem. We will show, for instance, dividing normal-theory-based confidence intervals into ``long'' and ``short'' intervals based on an arbitrarily-chosen width criterion will give us new reference classes: long intervals will contain the true value more than 95\% of the time, and short ones less. 
+
+To show that the problem is not about the meaning of word ``probability'' as MU claim, we will do something that may seem strange: we will use the nonword ``bunky'' instead, associating it with certain kinds of intervals. We may say, for instance, that we have 95\% ``bunkiness'' in an interval.  Note that bunky has no meaning at all, and yet we will show logical inconsistencies. Suppose we have a random sequence of confidence intervals generated from a confidence procedure, and we know that in the long run $X\%$ of them would contain the true value, then for any one of those intervals we say the interval is $X\%$ bunky, or that we have $95\%$ bunkiness in the interval. Put another way, we have {\em associated} 95\% bunkiness with the interval.
+
+<<ci.setup,echo=FALSE>>=
+alpha = .05
+conf.coef = 100*(1-alpha)
+Xbar = .25
+s = .21
+N = 10
+sigma=.15
+
+tstar = qt(1-alpha/2,N-1)
+zstar = qnorm(1-alpha/2)
+ci = Xbar + c(-1,1)*tstar*s/sqrt(N)
+ci.z = Xbar + c(-1,1)*zstar*sigma/sqrt(N)
+  
+p.in2 = pchisq((s^2/sigma^2)*tstar^2,1)
+
+
+@
+
+To show that ``bunkiness'' leads to problems in spite of its meaninglessness, we consider the case where we have a specific confidence interval to interpret. Suppose, for instance, we sample $N=\Sexpr{N}$ participants from a normal population. Our sample mean $\bar{X}=\Sexpr{Xbar}$, and our sample standard deviation is $s=\Sexpr{s}$, yielding a \Sexpr{conf.coef}\% Student's $t$ confidence interval of $[\Sexpr{ci[1]},\Sexpr{ci[2]}]$. We now say we have 95\% bunkiness in that interval.
+
+Suppose that someone reliable tells us that $\sigma=\Sexpr{sigma}$. We now have more information that we could use in the data analysis. Notice, however, that nothing about the long-run behaviour of the Student's $t$ intervals changes, so our bunkiness doesn't change. Still, \Sexpr{conf.coef}\% of the Student's $t$ intervals, on average, contain the true value; still, either the true value is in the interval or it is not, and the conditions under which the interval contains the true value have not changed. We thus still have 95\% bunkiness in the interval. But now, we could compute a 95\% $z$ interval of $[\Sexpr{ci.z[1]},\Sexpr{ci.z[2]}]$; another interval, nested within the first, in which we can have 95\% bunkiness. This is not yet a logical contradiction, but it does appear that bunkiness is a strange construct.
+
+We can also obtain a second assessment of the bunkiness of our first interval. It turns out that \Sexpr{round(p.in2*100,1)}\% of Student's $t$ intervals contain the true value when $s/\sigma=\Sexpr{s/sigma}$, and thus we can have \Sexpr{round(p.in2*100,1)}\% bunkiness in the interval $[\Sexpr{ci[1]},\Sexpr{ci[2]}]$. This is due to the easily-proven but not widely-known fact that wider Student's $t$ CIs contain the true value with greater probability than narrower ones. Figure~\ref{fig:CInorm} shows the probability that an interval contains the true value as a function of the overestimation of the true standard deviation. Intervals are narrow when $\sigma$ is underestimated, and wide when $\sigma$ is overestimated. 
+
+%that the probability that a Student's $t$ interval contains the true value, given a particular value of $s$, is
+%\begin{eqnarray}
+%F_{\chi_1^2}\left(\frac{s^2}{\sigma^2}f^*\right)\label{eq:ci.in}
+%\end{eqnarray}
+%where $F_{\chi_1^2}$ is the cumulative distribution function of the $\chi_1^2$ distribution and $f^*$ is the $\alpha$ critical value for an $F_{1,N-1}$ statistic.
+
+<<CInorm,echo=FALSE,fig.cap="Probability that a 95\\% Student's $t_9$ CI contains the true value as a function of the ratio of the sample standard deviation $s$ to the true standard deviation $\\sigma$.",fig.width=5,fig.height=5>>=
+
+xx = 2^(seq(-2.2,2.2,len = 100))
+
+pp = pchisq(xx^2 * qf(1-alpha,1,N-1), 1)
+
+par(las=1)
+plot(xx,pp, log = "x", ty='l', ylim = c(.5,1), xlim=c(1/4,4),xlab=expression(s/sigma), ylab=expression(paste("Prob. CI contains ", mu)),lwd=2)
+abline(h=1-alpha,lty=2)
+abline(h=1,col=rgb(0,0,0,.3))
+text(10^par()$usr[2],.95,paste0(conf.coef,"%"), adj=c(1.5,1.5))
+
+abline(v=s/sigma,lty=3)
+text(s/sigma,sum(par()$usr[3:4]*c(.8,.2)),substitute(s/sigma==z,list(z=s/sigma)),adj=-.1)
+
+@
+
+
+We have now assigned both 95\% and \Sexpr{round(p.in2*100,1)}\% bunkiness to the same interval. This is the essence of the reference class problem. When the reference class is all intervals, the probability is $.95$; when the reference class is all intervals with $s/\sigma=\Sexpr{s/sigma}$, the probability is $\Sexpr{as.character(round(p.in2,3))}$. In statistics, the set of all samples such that $s/\sigma=\Sexpr{s/sigma}$ is called a {\em relevant subset}, because knowledge that our sample is in this subset can inform our inference. 
+
+One might object that the above demonstration required knowledge of $\sigma$, but this does not diminish the force of the argument. The long-run properties of Student's $t$ remain exactly the same after knowledge of $\sigma$ was obtained, and those are the properties on which the bunkiness was based. It is true that when $\sigma$ is known the $z$ interval is better, in the sense that the $z$ interval will have a shorter average width; MU's logic, however, did not include anything about optimality; in fact, they say that ``[such] criteria have no relevance to the present discussion'' (footnote 1, page XX). As it turns out, however, the objection is moot; we do not need to know the true value of $\sigma$ to show a contradiction.
+
+Examination of Figure~\ref{fig:CInorm} reveals that the probability of an interval containing the true value is an increasing function of $s$. This suggests a strategy: pick any positive number $s_0$, and if $s>s_0$ call the interval ``wide.'' If $s\leq s_0$, call the interval ``narrow.'' A simple calculation will show that narrow intervals contain the true value less than 95\% of the time, while wide intervals will contain the true value more than 95\% of the time, regardless of what number we choose as $s_0$. Suppose we chose $s_0=.1$. Since $s>s_0$, we would call $[.1,.4]$ a wide interval. We know that wide intervals contain the true value more than 95\% of the time, and out interval is a wide interval; thus, we can have {\em more than} 95\% bunkiness in the interval.
+
+We have now associated exactly 95\% bunkiness and more than than 95\% bunkiness with the same interval, which is clearly a contradiction. Showing this contradiction did not depend on the word ``bunkiness'' having any particular definition; rather, it depended only on the association between the ``bunkiness'' of the interval and a long-run probability. The issue cannot be defined away; simply replace the word ``bunkiness'' with ``confidence'' or ``probability,'' and the problem is the same.\footnote{The problem is actually worse in the case of ``probability,'' because probability has to follow certain rules that neither ``bunkiness'' nor ``confidence'' do.}
+
+This problem with confidence intervals has long been understood by statisticians. Fisher, for instance, understood the problem immediately. In the first published discussion of confidence interval theory, Fisher stated that confidence interval theory ``had been erected at considerable expense, and it was perhaps as well to count the cost. The first item to which [Fisher] would call attention was the loss of uniqueness in the result, and the consequent danger of apparently contradictory inference.'' \citep[][discussion at p. 618]{Neyman:1934}. Fisher's critique of confidence intervals did not arise because he was reluctant to associate probabilities with intervals; Fisher had developed fiducial theory, which allows precisely that. Fisher's critique of CI theory arose because CI theory does not afford a unique association between the probabilities and intervals. Neyman and Pearson were both aware of this fact. After giving an example wherein the same interval could be given two different probability assignments, \citet{Pearson:1939} wrote: 
+\begin{quote}
+``Following Neyman's approach [of not associating a probability to specific intervals], there is no inconsistency in this result, since one probability is associated with the employment of the [one procedure], the other with [another procedure]. It is only when we try to divorce the probability measure from the rule and to regard the former as something associated with a particular interval, that the need for a unique probability measure seems to be felt.'' (p. 471)
+\end{quote}
+The way that Neyman avoided inconsistency was to avoid, as Pearson put it, divorcing probability statements from the procedures: ``What [the CI] assert[s] is that the [long-run] probability of success in estimation [...] is equal to [$95\%$]'' \citep{Neyman:1952}. Neyman denied that confidence intervals provided {\em any conclusions} about the parameter:
+\begin{quote}
+``[I]t is not suggested that we can `conclude' that [the interval contains $\mu$], nor that we should `believe' that [the interval contains $\mu$]...[we] decide to behave as if we actually knew that the true value [is in the interval]. This is done as a result of our decision and has nothing to do with `reasoning' or `conclusion'. The reasoning ended when the [CI procedure was derived]. The above process [of using CIs] is also devoid of any `belief' concerning the value [...] of [$\mu$].'' (1941, p. 133-134)
+\end{quote}
+To modern readers this will seem extreme, but it is actually a necessary restriction on the interpretation of confidence intervals, and attempts to deny it will fall victim to the reference class problem.
+
+We can now see why the distinction between pre-data and post-data assessments of uncertainty is so critical in frequentism, and why the association between a probability (or confidence) statement and a specific interval in HMRW's statements 1-5 were incorrect. It is not due to a linguistic prohibition by ``strict frequentists''; rather, it is due to the reference class problem. Before observing the data, the reference class for ``What is the probability that an interval in this sequence of intervals contains the true value?'' is clear, because the reference class is defined by the sequence. However, ``What probability/confidence should be associated with this specific interval?'' is a question that cannot be uniquely answered based solely on the frequentist properties of the CI, because the interval will be a member of multiple reference classes. Any unique, post-data inference must be based on something other than freqentist long-run probability.
+
+For more on relevant subsets and confidence intervals, see~\citet{Buehler:1959}, \citet{Buehler:Feddersen:1963}, \citet{Brown:1967}, \citet{Robinson:1975}, \citet{Robinson:1979}, and our in-depth discussion of confidence interval theory \citep{Morey:etal:unpublished}.
+
+
+\section{Can experts be 95\% confident?}
+
+MU cite several authors who present statements about confidence intervals which we deem incorrect. MU are right that many papers and textbooks show interpretations of CIs which we would consider incorrect, and some are indeed written by well-known statisticians. Given the previous demonstrations that $p$ values are often misinterpreted \citep[e.g.,][]{Haller:Krauss:2002}, it should come as no surprise that CIs are also misinterpreted. It appears to be common knowledge among theoreticians that even experts can find confidence intervals difficult to understand.
+
+MU assert that ``it is implausible that such well-established mathematical statisticians do not understand CIs.'' There are, however, several reasons why texts might contain incorrect or misleading statements about CIs. We explore two here: first, confidence interval theory is, indeed difficult, as indicated by the continuing controversy over how to interpret them. Second, writers of textbooks have different pressures on them than survey-takers; they want to write in a way that seems clear, and that connects with what people will read and hear elsewhere.
+
+Even the literature cited by MU underscores that mathematical statisticians have difficulty with CIs. \citet{Dempster:1964} writes that ``{\em [i]t does not appear to be widely understood that, after the observation is taken, the defining property [of the confidence interval] admits only a postdictive interpretation} [that is, the one suggested by MU].'' (p. 57; emphasis in original). Dempster, in fact, emphasizes this sentence for effect. He is talking about mathematical statisticians, and explicitly saying that they do not appear to understand confidence intervals.
+
+\citet[][pp. 211-215]{Neyman:1952} presents a humorous, fictional dialogue in which an ``eminent elderly statistician'' has great difficulty understanding confidence intervals. \citet{Mayo:1981} writes that ``while confidence levels are often (wrongly) interpreted as providing [...] a measure of [certainty that the parameter is in the interval], no such interpretation is warranted. Admittedly, such a misinterpretation is encouraged by the word `confidence'.'' 
+
+More recently, \citet{Briggs:2012} described the definition of confidence intervals as ``so contrived and anti-intuitive'' that ``[e]ven trained statisticians, who should know better, err and treat the confidence interval as a [Bayesian] credible interval'' (p. 3-4). Elsewhere, \citet{Briggs:2012a} offered a humorous challenge: ``If you can find even one [published analysis] where the confidence interval is not interpreted as a credible interval, then I will eat your hat.'' None of the statisticians or philosophers quoted here take it for granted that statisticians understand confidence intervals; we see no reason why MU should take it for granted either.
+
+It will be informative, however, to take a closer look at the three quotes from statistical experts that MU provided. Three textbooks written by experts used language close to our statement~5:
+\begin{namedtheorem}[5 (HMRW)]
+We can be 95\% confident that the true mean lies between 0.1 and 0.4.
+\end{namedtheorem}
+which we asserted was incorrect because it confuses the pre-data confidence coefficient with the post-data interval, and will thus will fall victim to the reference class problem.
+
+Consider first \citet{deGroot:1989}, which MU quote in its second edition: ``[w]e can then make the statement that the unknown value of $\mu$ lies in the interval [...] with confidence 0.95.''. This text is now in its fourth edition \citep{deGroot:Schervish:2012}; the current version of the text {\em does not contain} the passage MU emphasize. The text later makes clear why it was removed, emphasizing that ``the observed interval...is not so easy to interpret...[S]ome people would like to interpret the interval...as meaning that we are 95\% confident that $\mu$ is between [the observed confidence limits]. Later...we shall show why such an interpretation is not safe in general'' (p. 487). Following an example \citep[coincidentally, one explored by ][ and dismissed by MU as an ``artificial case'']{Morey:etal:unpublished}, the reason is given:
+\begin{quote}
+``it is not always safe to assume that our estimate is close to the parameter just because the sampling distribution of the estimator had high probability of being close. There may be other information available that suggests to us that the estimate is not as close as the sampling distribution suggests, or that it is closer than the sampling distribution suggests.'' (p. 493)
+\end{quote}
+As often happens in new editions of a text, the mistakes of the old edition have been corrected in the new. The new edition clearly states that the language used in the old edition cited by MU was generally incorrect and misleading. 
+
+
+Some authors make the friction between correctness and pragmatics explicit. \citet{Howell:2013}, for example, states that ``So what it does it mean to say that the 95\% confidence interval is $1,219 \leq \mu \leq 1,707$? For seven editions of each of two books I have worried and fussed about this question'' (p. 194). \citet{Hoenig:Heisey:2001} suggest that less-than-rigorous teaching of confidence intervals might even be acceptable, saying that ``[i]f informally motivated confidence intervals lead to better science than rigorously motivated hypothesis testing, then perhaps the rigor normally presented to students destined to be applied researchers can be sacrificed'' (p. 23). It must be emphasized, however, that an argument that a technically-incorrect statement might lead to better outcomes is not an argument for the statement's correctness.
+
+A second reason why textbooks may contain incorrect statements is that the author is trying to connect with the conventions that have arisen around confidence intervals. The third example cited by MU was \citet{Robinson:1982}, who said that ``...we say that we have 95\% confidence...'' (p. 121). Robinson, however, is well-known for his articles showing that interpretation of confidence intervals is problematic. Indeed, in the opening of the entry quoted by MU, Robinson employs trademark British understatement in noting the problem:
+\begin{quote}
+``It is natural to expect it to mean `an interval in which one may be confident that a parameter lies.' Its precise technical meaning {\em differs substantially from this} (see Jones [1958], Cox [1958], and Dempster [1964]) but the intuitive idea is not entirely misleading.'' (p. 120, emphasis added)
+\end{quote}
+Later, Robinson says that ``confidence coefficients are a good measure of uncertainty before the data have been seen, but may not be afterward'' (p. 125). Other papers by \citet{Robinson:1975,Robinson:1979} --- in which he calls such statements ``unreasonable'' and ``rather dubious'' --- make the reasons clear: relevant subsets, as we described above. By using the offending language Robinson meant only to describe a convention, one that he explains is not correct in general. MU suggest that 
+\begin{quote}
+``...saying that we are `95\% confident' of a statement appears to be just a compact
+way of saying, `the statement is a random selection from a population of statements that are known to be 95\% accurate overall, and we have no other basis on which to judge the accuracy of the statement.' '' (p. XX)
+\end{quote}
+MU are incorrect, even according to the sources that MU cited for support: the reference class problem, and pervasive relevant subsets, tells us that we {\em do} have other bases on which to judge the accuracy of the statement, if the ``accuracy'' is the frequentist long-run probability.
+
+A close examination of two of the three examples produced by MU therefore support the position taken by HMRW, and the third is likely a pragmatic oversimplification. We suspect readers will sympathize; what author has not, at some point, regretted oversimplifying a complicated concept to the point where it is incorrect? It does not require a stretch of the imagination to see why authors of texts might use incorrect language in describing confidence intervals, even without resorting to the explanation that the authors did not understand confidence intervals. Ultimately, however, what is correct and incorrect must be determined by theory, not by our impression of the status, knowledge, or motivations of textbook writers.
+
+\section{How can one interpret an observed confidence interval?}
+Given that we have ruled out all of the common ways of interpreting confidence intervals, the question naturally arises: how can a single observed interval be interpreted in terms of the parameter of interest? There are, broadly speaking, three options. The first is to follow Neyman and avoid the problem by {\em not} interpreting CIs at all. As Neyman said, the confidence interval asserts nothing except that it is a sample from a confidence procedure. 
+
+Avoiding any interpretation is unacceptable for most scientists; after all, the goal of most research is often to make data-informed statements about the parameter. The second option is to interpret the interval as all the values that would not be rejected by a particular significance test. This, however, inherits all the problems of significance tests \citep{Berger:Sellke:1987,Jeffreys:1961,Rouder:etal:2009a,Wagenmakers:etal:2008}. It is a well-known fact that failure to reject a value by a significance test cannot be used to argue that the value is reasonable, so we have merely pushed the interpretation problem back one level onto the significance tests, which is troubling. Moreover, this route violates the purpose that many researchers see confidence intervals as serving: to wean researchers off significance tests \citep[e.g.]{Cumming:2014,Loftus:1996,Steiger:2004,Steiger:Fouladi:1997}. 
+
+The third route is to abandon confidence interval theory, and adopt another theory of inference. For instance, under certain conditions --- namely given the specification of a prior distribution --- Bayesian theory allows the assessment of the ``posterior probability'' of an interval, which indexes the post-data certainty with which an analyst should believe an interval contains the true value of the parameter. If a prior distribution is assumed, the intervals generated by confidence interval theory can be assessed for their posterior probability. The reason why this solution works is that the inference is not based on the long-run properties of the procedure, but rather the posterior distribution, and hence the inference must be unique. In some cases, Bayesian assessments of uncertainty will be similar to those obtained from a misunderstanding of confidence intervals. The Bayesian post-data probability, however, is guaranteed to be unique and meaningful, provided that the prior is meaningful.
+
+MU offer other alternative interpretations of confidence intervals, which they claim are ``appropriate'' and ``useful.''\footnote{Though MU offer alternatives for our statements 1, 3 and 4, we will focus only on their alternative for statement 4; our points generalize to the other statements as well.} For instance, suppose one sampled data from a normal population and then computed a Student's $t$ interval of $[.1,.4]$. They offer this statement as an alternative to HMRW's statement~4:
+\begin{namedtheorem}[$4'$ (MU)]
+If the current sample is one of the 95\% of all samples with relatively small values of $|\bar{X}-\mu|/S$, then $\mu$ lies in the interval 0.1-0.4.
+\end{namedtheorem}
+While true, this interpretation is trivial and unhelpful. To see why, let ``relatively small'' mean that $|\bar{X}-\mu|/S<c$ for some positive value $c$. Then a bit of algebra yields the condition
 \[
 \bar{X} - cS < \mu < \bar{X} + cS.
 \]
-But $c$ must be chosen such that 95\% confidence procedure results. This condition, then, is merely the condition that $\mu$ is in the interval. MU's statement 4' amounts to ``If $\mu$ is in the interval, then $\mu$ is in the interval, and $\mu$ will be in the interval 95\% of the time.'' The first part of the statement is an information-free tautology; the only non-trivial information we are left with is ``$\mu$ will be in the interval 95\% of the time.'' Of course, this is merely the definition of the confidence procedure, and makes reference only to the long-run property of the interval. Contrary to MU, statements 1' and 3' and 4' are not ``entirely appropriate conclusions''; they are, rather, entirely unhelpful tautologies.
+But $c$, by definition, must be chosen such that 95\% confidence procedure results. This condition, then, is merely the condition that $\mu$ is in the interval. MU's statement $4'$ amounts to 
+\begin{namedtheorem}[$4'$ (reworded)]
+If the conditions under which $\mu$ would be in the interval hold, then $\mu$ lies in the interval; these conditions will hold in 95\% of samples.
+\end{namedtheorem}
+The first part of the statement is tautological; the only non-trivial information left is ``The conditions under which $\mu$ is in the interval will hold in 95\% of samples.'' Of course, this is merely the definition of the confidence procedure, and makes reference only to the long-run property of the interval. Although MU sought an alternative interpretation to the frequentist one, they have offered the frequentist definition in disguise.
 
-We find it implausible that respondents would interpret the statements as MU suggest, for three reasons. First, a MU's interpretations would have strange implications for other statements respondents could also endorse. Consider the situation where one has perfect knowledge of $\mu$ (say, through simulation, theoretically, or with sufficient previous data, such as modern measurements of the speed of light in a vacuum). This would not change MU's probability statements at all; even though we might know for certain that, say, 
-\begin{itemize}
-\item (Statement A)  $\mu=2$,
-\end{itemize}
-and upon observing a $CI_{95\%}$ of $[.1, .4]$, MU would also tell us we could state that
-\begin{itemize}
-\item (Statement B) $Pr(.1<\mu<.4) = .95$
-\end{itemize}
-These two statements would be contradictory under any formal definition of probability, including Bayesian and frequentist ones; to see why, replace $\mu$ in Statement~B with the known value of $\mu$. If one accepts MU's argument, however, there is no contradiction in endorsing both~A and~B simultaneously\footnote{This may seem counter-intuitive, but the only way that a logical conditional statement such as MU's 4' can be false is if the antecedent is true and the consequent is false. If $\mu=2$ is true and the CI is $[.1, .4]$, then the antecedent and consequent in statement 4' are both false, and hence 4' is still true.}. That 4' is true regardless of the true value of $\mu$ --- whether it is known or not --- and true for any observed CI makes 4' is a trivial, useless statement.
+The fact that MU's definition turns out to assert only the long-run probability of the procedure would, of course, not surprise \citet{Neyman:1952}, who specified that ``[all the CI] does assert is that the probability of success in estimation ... is equal to [95\%]" (p. 214). It would also not surprise \citet{Dempster:1964}, who said that such interpretations have ``essentially tautological content'' (p. 62). MU's alternative statements are not useful; rather, they simply reassert that an interval is a confidence interval. MU's statements give the researcher no new information and leave them with the same problem they had previously: wondering how to interpret the interval.
 
-If MU are correct that people interpret CIs this way, then a modified version of the survey could be circulated in which in information is added that $\mu=2$, with certainty, and this should produce no change in the responses among those who interpret 4 as 4'. We suspect, however, that this would have drastic effects on the responses, because most people would find the two statements A and B above to be contradictory. Anyone who applied the probability knowledge from their introductory course in statistics would find the statements contradictory. If Statements~A and~B appear to a respondent as contradictory, they cannot be interpreting the statements as MU suggest. 
+In fact, like all frequentist interpretations, MU's statements do not have any implications for where one should believe the parameter actually is. Dempster points out that researchers actually desire a {\em different} sort of statement than the ones MU suggest: so-called ``predictive'' statements, ones that have implications for where the parameter is believed to be. He says ``I find Neyman quite vague on the intellectual mechanism whereby [CI] interpretations come to have predictive implications. I suspect that particular observed confidence statements are intended to have the effect of predictive probability statements, without actually using the word probability and without paying the price which the use of the word probability demands.''  (p. 60).\footnote{Compare this to MU's statement that ``the word `probability' is conspicuously absent from [our] interpretations.''} We completely agree; the advocacy of confidence intervals rests on an interpretive sleight of hand by which trivial statements are rendered as predictive statements about the parameter \citep[see also][]{Morey:etal:unpublished}.\footnote{Consider, for instance, \citeapos{Cumming:2014} statement that ``a CI is usefully informative about what is likely to happen next time.'' This is precisely what Dempster noted that confidence interval theory {\em can't} do.}
 
-Second, we note that even \citet{Dempster:1964} --- cited by MU as clarifying the interpretation they suggest --- writes that ``{\em [i]t does not appear to be widely understood that, after the observation is taken, the defining property [of the confidence interval] admits only a postdictive interpretation [that is, the trivial one suggested by MU].}'' (p. 57; emphasis in original). Dempster, in fact, emphasizes this sentence for effect. He is talking about mathematical statisticians, and explicitly saying that they do not appear to understand confidence intervals; in particular, that they only admit trivial statements (this is not cited as a point of strength for CIs by Dempster). Certainly, if the mathematical statisticians contemporary with Dempster did not know that CIs admit only trivial interpretations, why would the respondents in our study? This interpretation is not taught, and has never been widespread, apparently.
+\section{How do participants interpret CIs?}
 
-A third reason we believe that respondents were unlikely to be adopting MU's trivial interpretation is that they do not appear to have any implication for where one should believe the parameter actually is. Why would one adopt CIs if such trivial interpretations were the only possible ones? Dempster points out that researchers actually desire a {\em different} sort of probability statement than the one MU suggest: a so-called ``predictive'' probability statement, one that has implications for where the parameter is believed to be. He says ``I find Neyman quite vague on the intellectual mechanism whereby [CI] interpretations come to have predictive implications. I suspect that particular observed confidence statements are intended to have the effect of predictive probability statements, without actually using the word probability and without paying the price which the use of the word probability demands.''  (p. 60).\footnote{Compare this to MU's statement that ``the word `probability' is conspicuously absent from [our] interpretations.''} We completely agree; the advocacy of confidence intervals rests on an interpretive sleight of hand by which trivial statements are rendered as predictive statements about the parameter (see also \citet{Morey:etal:unpublished}).
+A key aspect of MU's argument is that ``[the survey statements] are incompatible with a `strict frequentist' interpretation of the word `probability', but participants may have had a different interpretation in mind when completing the questionnaire. In that case, acceptance of these statements as true may not necessarily indicate misunderstanding of CIs per se, but rather use of a different interpretation of `probability' '' (Miller \& Ulrich, in press, p. XX). Although we reject their alternative interpretations, we can take another look at the data to see whether it is consistent with their view on how survey respondents may have been interpreting the questions.
 
-Finally, while we do not believe that it likely that respondents were interpreting ``probability'' as MU suggest, we agree with MU that participants may have a different understanding of probability than the frequentist one that serves as the basis of CI theory. We believe it is more likely that respondents interpreted the word ``probability'' as a degree of belief. All of MU's examples (the coin flip, the deck of cards, and the random-number generator) are consistent with this interpretation of probability. This is not helpful to MU's case: even if the respondents did adopt this definition of probability, it does not affect our conclusions about the incorrectness of the statements in our questionnaire because there is no necessary relationship between the CI and the stated degree of belief.	
+Of course, we admit that interpretation of survey responses can be difficult. We cannot rule out that respondents may have interpreted our statements in any number of ways that we did not intend. In the case of our survey, the instructions and statements were short and simple. We believe the burden of proof lies with anyone suggesting that participants interpreted the statements to mean something other than what was written. As it turns out, we can easily show that participants {\em did not} have MU's interpretation in mind, and even more, that the response patterns do not make sense under any definition of probability. We note that MU themselves admitted that our hypothesis --- that respondents show robust misinterpretations of CIs --- was ``certainly support[ed].'' Our goal in this section is to show that the case is stronger even than reported by HMRW, and inconsistent with MU's proposed interpretation.
 
-\section{Wrong under any definition of probability}
-
-Statements~1,~3, and~4 are incorrect by any commonly taught definition of probability, and MU can only defend these statements by asserting that respondents may be understanding these statements as if they are tautological restatements of the definition of a confidence procedure, and hence not wrong. There are good reasons to believe that their trivial interpretations are not widespread, for reasons including those listed above. At any rate, MU offer no empirical evidence that their trivial interpretation is widespread; in fact, as MU themselves point out, nonsensical statement~6 was endorsed at a similar rate as statement~4, suggesting that respondents do not understand CIs at all. Furthermore, respondents who endorsed~4 were barely less likely to endorse statement~6 than those that did not endorse statement~4 (62\% vs 65\%), suggesting that endorsement of statement~4 does not reflect any substantial knowledge of confidence intervals.
-
-Suppose, however, that MU are correct, and respondents were substituting tautologically true statement~4' for our statement~4. Is~4' a suitable substitution for 4? The answer is ``no'', regardless of one's interpretation of the word probability {\em so long as that definition conforms to the requirements of the laws of probability.} To see why, one must understand two facts: first, there are many confidence procedures for the same problem, all with the same confidence coefficient but yielding different intervals; second, a given confidence interval can arise from two different confidence procedures, each with different confidence coefficients. This lack of unique inferences has been known since the inception of confidence interval theory. Fisher, for instance, in the discussion of the Neyman's first paper including CI theory, stated that CI theory ``had been erected at considerable expense, and it was perhaps as well to count the cost. The first item to which [Fisher] would call attention was the loss of uniqueness in the result, and the consequent danger of apparently contradictory inference.'' \citep[][discussion at p. 618]{Neyman:1934}.
-
-<<refclass,echo=FALSE,fig.cap="The reference class problem. A: Three nested confidence intervals, all computed from confidence procedures with the same 95\\% probability of including the true value. B: Excerpts from four sequences of applications of the confidence procedures in Panel~A. Each letter represents computation of an interval with a different confidence coefficient; ``X'' represents a 95\\% interval, ``Y'' represents a 99\\% interval, and ``Z'' represents a 91\\% interval. The rectangle shows how the same confidence interval can be seen as a sample from two sequences, each with different probabilities of containing the true value.",fig.width=10,fig.height=5>>=
-ci.survey = c(.1,.4)
-N = 10
-xbar = mean(ci.survey)
-tstar_95 = qt(.975, N-1)
-tstar_91 = qt(.955, N-1)
-tstar_99 = qt(.995, N-1)
-
-s = diff(ci.survey)/2 *sqrt(N)/tstar_95
-
-ci_95 = xbar + c(-1,1)*tstar_95*s/sqrt(N)
-ci_91 = xbar + c(-1,1)*tstar_91*s/sqrt(N)
-ci_99 = xbar + c(-1,1)*tstar_99*s/sqrt(N)
+Figure~\ref{fig:expertise} (top) shows the proportion of endorsements for each statement as a function of self-rated expertise. Apart from statement~1, which shows a slight decrease in endorsements as expertise increases, there does not appear to be any relationship between expertise and endorsement of the statements. Consider statement~6 in HMRW:
+\begin{namedtheorem}[6 (HMRW)]
+If we were to repeat the experiment over and over, then 95\% of the time the true mean falls between 0.1 and 0.4.
+\end{namedtheorem}
+This statement is nonsense, though the first author of this manuscript has heard it offered several times as an interpretation of confidence intervals. Statement~6, which should be easily rejectable by anyone with an understanding of CIs, has a higher endorsement rate than statements~4 and~5, endorsements of which MU claim may indicate knowledge of CIs. Moreover, endorsements of statements~4 and~5 do not increase as self-rated expertise increases. If CIs are difficult to interpret --- as we assert and as MU admit --- then it seems implausible that the responses of first-year students reflect no knowledge, while the equally-high endorsement rates of experienced researchers reflect knowledge. We believe it is much more plausible that these responses indicate lack of understanding.
 
 
-theta = 0
+%Statement~1 was:
+%\begin{namedtheorem}[1 (HMRW)]
+%The probability that the true mean is greater than 0 is at least 95\%.
+%\end{namedtheorem}
+%Statement~1 represents a common, but fallacious, confusion of the confidence interval with a Bayesian credible interval. It is good that this fallacy decreases as expertise increases, but note that even at its lowest rate of endorsement, which includes researchers who rated their expertise the highest, it is still endorsed by about a quarter of respondents.
 
-seq.len = 20
+<<expertise,echo=FALSE,fig.cap="Top: Proportion of sample endorsing each statement as a function of self-rated expertise. Each series 1-6 represents the corresponding statement. If expertise is NA, then the respondent did not respond to this question. The vast majority of missing expertise ratings is from first-year students (86\\%) or Master students (9\\%). Bottom: The distribution of self-rated statistical expertise in the sample.",fig.width=5,fig.height=5>>=
 
-par(mar=c(5,0,0,0), mfrow = c(1,2))
-plot(1,1, ty = 'n', ylim = c(0,1), xlim = c(-1,1), axes=FALSE, ylab = "", xlab = "Mean")
+xx = table(is.na(data$expertise),data$group)
+propOfMissing = (xx / rowSums(xx))[2,]
 
-arrows(ci_95[1], 3/5,ci_95[2], 3/5, code = 3, angle=90, len = .1)
-arrows(ci_91[1], 2/5,ci_91[2], 2/5, code = 3, angle=90, len = .1)
-arrows(ci_99[1], 4/5,ci_99[2], 4/5, code = 3, angle=90, len = .1)
-arrows(ci_91[1], 1/5,ci_91[2], 1/5, code = 3, angle=90, len = .1)
+coeffs=c(Q1=coef(glm(Q1~expertise, family = "binomial",data=data))[[2]],
+  Q2=coef(glm(Q2~expertise, family = "binomial",data=data))[[2]],
+  Q3=coef(glm(Q3~expertise, family = "binomial",data=data))[[2]],
+  Q4=coef(glm(Q4~expertise, family = "binomial",data=data))[[2]],
+  Q5=coef(glm(Q5~expertise, family = "binomial",data=data))[[2]],
+  Q6=coef(glm(Q6~expertise, family = "binomial",data=data))[[2]])
 
+expQs=apply(data[,1:6],2, function(v) with(data,tapply(v,round(expertise),mean)))
 
-text(-1,4/5,"CP-D:", adj=0)
-text(-1,3/5,"CP-A:", adj=0)
-text(-1,2/5,"CP-E:", adj=0)
-text(-1,1/5,"CP-C:", adj=0)
-
-axis(1)
-
-mtext("A", 3, adj=.95,-1.5, cex=1.5)
+par(mar=c(4,4,1,4))
+matplot(expQs,ty='b',xlab="", ylab="", ylim=c(-.5,1), xlim=c(.5,12.5),axes=FALSE,lty=1)
+axis(1, at = 1:10)
+axis(1, at = 12, lab="NA")
+abline(h=0)
 box()
+axis(2,at=seq(0,1,.2),las=1)
+mtext("Prop. endorsing",2,3,adj=.75)
+mtext("Expertise",1,2.2,adj=.5)
 
-#abline(v = 0, col="gray", lty=1)
-abline(v = xbar, col="gray", lty=2)
+points(rep(12,6),colMeans(data[is.na(data$expertise),1:6]),pch=as.character(1:6),col=1:6)
 
-points(rep(xbar,4), (1:4)/5, pch=21, col="black", bg="lightblue")
+freqs = table(round(data$expertise))
+ymin = par()$usr[3]
+for(i in 1:10)
+  rect(i-.5,ymin,i+.5,(freqs[i]/200)*abs(ymin)+ymin,col="lightblue")
+axis(4,at=c(0,.5,1)*abs(ymin)+ymin,lab=c(0,.5,1)*200,las=1)
+mtext("Frequency",4,3,adj=.05)
 
-par(mar=c(5,0,0,0))
-plot(1,1, ty = 'n', ylim = c(0,1), xlim = c(0,1), axes=FALSE, ylab = "", xlab = "")
+rect(12-.5,ymin,12+.5,(sum(is.na(data$expertise))/200)*abs(ymin)+ymin,col="pink")
 
-xpts = seq(.1,.70,len=seq.len)
-xwidth=diff(xpts)[1] * 1.1
-
-points(xpts, rep(3/5,seq.len), pch="X")
-text(c(xpts[1] - xwidth, xpts[seq.len] + xwidth), rep(3/5,2), expression(cdots))
-
-whichCI = sample(1:2,seq.len, replace =TRUE)
-
-points(xpts, rep(2/5,seq.len), pch=c("Y","Z")[whichCI]) 
-text(c(xpts[1] - xwidth, xpts[seq.len] + xwidth), rep(2/5,2), expression(cdots))
-
-points(xpts, rep(4/5,seq.len), pch=c("Z","Y")[whichCI])
-text(c(xpts[1] - xwidth, xpts[seq.len] + xwidth), rep(4/5,2), expression(cdots))
-
-points(xpts, rep(1/5,seq.len), pch="Z")
-text(c(xpts[1] - xwidth, xpts[seq.len] + xwidth), rep(1/5,2), expression(cdots))
-
-
-
-text(1,4/5,"Pr(in)=95%", adj=1)
-text(1,2/5,"Pr(in)=95%",adj=1)
-text(1,3/5,"Pr(in)=95%", adj=1)
-text(1,1/5,"Pr(in)=91%", adj=1)
-
-first.z = which(whichCI==2)[1]
-
-ymarg = .05
-
-rect(xpts[first.z] - xwidth/2, 1/5 - ymarg, xpts[first.z] + xwidth/2, 2/5 + ymarg, border="red")
-
-box()
-mtext("B", 3, adj=.95,-1.5, cex=1.5)
 
 @
 
-We can demonstrate this using multiple confidence procedures. Suppose we have a method for constructing CIs with any given confidence coefficient: our only requirement is that the width of the CI is an increasing function of the confidence coefficient, which is true of most confidence procedures in common use. We denote as Confidence Procedure A (CP-A) a CP constructed with a confidence coefficient of 95\%. We can construct another 95\% confidence procedure by randomly combining two confidence intervals with different confidence coefficients. For instance, let CP-B and CP-C be intervals with $\alpha=.01$ and .09, respectively; that is, CPB and CPC are respectively 99\% and 91\% confidence procedures. We define two more 95\% confidence procedures, CP-D and CP-E:
-	\begin{itemize}
-	\item CP-D: Flip a fair coin. If the coin shows ``heads'' then compute an interval from CP-B; else, compute an interval from CP-C.
-	\item CP-E: Flip a fair coin. If the coin shows ``tails'' then compute an interval from CP-B; else, compute an interval from CP-C.
-	\end{itemize}
-Procedures CP-D and CP-E are easily seen to be 95\% confidence procedures. They may not be good confidence procedures; however, this is not at issue here.\footnote{As MU point out (footnote 1, p. 5), the relative performance of various CIs is not relevant for the present discussion; all that is relevant is that a procedure is a confidence procedure.}  Our analyst also needn't know how these CIs were constructed; indeed, this information was missing, purposefully, from the survey. Rejecting CIs on either of these grounds would be a tacit admission that some other information is needed to interpret a confidence interval besides knowledge that an interval was computed from some confidence procedure, which is precisely our point; more importantly, this point has been made by decades of statistical literature on CIs. 
+Evidence that participants have a shaky understanding of confidence intervals can be found by examining the sheer diversity in the response patterns. Note that there are a total of 64 total possible response patterns for 6 true/false questions. Of these, 37 appear in the data for the non-students ($N=151$). The most endorsed pattern by non-students is all that all statements are correct, at 11\%. Note that this includes nonsense statement~6. Interestingly, endorsing statement~6 alone is the next most popular response pattern (9\%), followed by statements 3 and 6 only (7\%). The top eight patterns are shown Table~\ref{tab:patterns}.
 
-Notice that one of CP-D or CP-E will always yield the wider interval of CP-A, CP-D, or CP-E, and the other the shorter; note also that CP-A will always be nested within the wider of CP-D and CP-E, and the shorter will always be nested within CP-A. This situation is depicted in Figure~\ref{fig:refclass}A. \citet{Neyman:1952} used similarly nested confidence intervals to warn about just the misinterpretations that MU make.\footnote{Examples of nested confidence intervals are easy to construct. For examples, see \citet{Neyman:1952}, \citet{Welch:1939}, and \citet{Morey:etal:unpublished}.}  If MU are correct that merely knowing that an interval was computed from a confidence procedure with 95\% coverage licenses the statement that ``the probability that the interval contains the true value is 95\%'', then the law of total probability implies that if any one of the nested 95\% intervals contains the true value, then the shortest of the 95\% intervals must contain the true value. Because the laws of probability will be the same for any interpretation of probability, no reinterpretation of the survey questions can avoid it. Moreover, a 95\% confidence procedure can always be constructed that sometimes yields arbitrarily large or small intervals, which would imply that the interval must be in the arbitrarily small interval. This is, of course, absurd.
+MU suggest five alternative statements that could be endorsed under their interpretation of the survey, meant to replace our statements 1-5. If participants understood CIs in the way that MU suggest, then they would endorse statements 1-5, and reject statement~6. This response pattern was shown in only seven of the 151 non-student respondents (5\%).
 
-But there are even bigger problems: if MU are correct, any given confidence interval can be assigned multiple probabilities simultaneously (Figure~\ref{fig:refclass}B). To see why, consider the trio of confidence procedures CP-B, CP-D, and CP-E. Half of the time, CP-C and CP-E will yield the same interval. But CP-C is a 91\% procedure, and CP-E is a 95\% confidence procedure. Under MU's logic, we can assign the same interval both 95\% and 91\% probability. Similarly, as previously noted, with nested CIs, if MU are correct then the laws of probability imply that all 95\% probability is located in the shortest interval of CP-E or CP-D, and hence the law of total probability implies that we should be able to assign 95\% probability to the shorter of the two intervals. However, always taking the shorter of these two is obviously a 91\% confidence procedure. If MU were correct, we can could assign both 95\% and 91\% probability to the shorter interval from CP-D and CP-E. The laws of probability, however, require unique probability assignments; therefore, MU's proposed assignment of probability to individual intervals lapses into contradiction, {\em regardless of the interpretation of probability one chooses.} 
+<<endorsementsTable,results="asis",echo=FALSE>>=
 
-These points are not controversial among statisticians and philosophers of statistics; these are precisely the sorts of contradictory inferences that Fisher warned about. In fact, the problem of non-unique probability assignments is an example of a more general and well-known problem called the ``reference class problem'' \citep{Venn:1888,Reichenbach:1949}: any CI can be thought of as being a sample from multiple different long-run sequences, and hence any probability assignment to individual CIs will not be unique. This is perhaps why \citet{Neyman:1952} specified that, ``[all the CI] does assert is that the probability of success in estimation using either of [...] two formulae is equal to [95\%]" (p. 214), avoiding the reference class problem and non-unique probability assignments because probability is never attached to any particular interval -- only procedures. 
+patterns.faculty = sort(table(apply(dataNoStudents[,1:6],1,function(v){
+  paste(paste("S",1:6,sep="")[as.logical(v)],collapse=",")
+}))/nrow(dataNoStudents), decreasing = TRUE)
 
- 
-Since MU's defenses of statements 1, 3, and 4 ultimately fail, we are left with the last statement they defended: statement 5 (``We can be 95\% confident that the true mean lies between 0.1 and 0.4''). The correctness of this statement will depend, in some sense, on the definition of ``confident.'' There are two immediately obvious definitions of the word ``confidence'' that one can use to interpret the statement. The first is the colloquial meaning, in which ``confidence'' entails a degree of belief.  In the context of CIs, this interpretation of confidence would require that there is a 95\% belief that the parameter is in the interval $[0.1, 0.4]$. Within frequentism, there is no formal justification for quantifying belief, and without any information about the context, no reasonable prior that would justify a Bayesian interpretation can be constructed. In fact, it is possible to construct confidence procedures --- even good frequentist procedures --- for which it is sometimes known with certainty that a computed interval does, or does not, contain the true value \citep{Berger:Wolpert:1988,Morey:etal:unpublished}. If confidence and degree of belief were synonymous, we would simultaneously assign 95\% and either 0\% or 100\% certainty to such an interval. It is hard to imagine any reasonable way of assigning degrees of belief that would allow this. The colloquial interpretation of CIs is clearly not a valid justification for statement~5.
+top.patterns = head(patterns.faculty,n=8)
+top.patterns = c(top.patterns[-5],top.patterns[5])
+top.patterns = as.matrix(top.patterns,ncol=1)
+colnames(top.patterns)="Proportion"
+rownames(top.patterns)[8] = paste0("*",rownames(top.patterns)[8])
+xtable(top.patterns,caption="The top 8 response patterns for non-students, and the proportion of non-students responding with that pattern. The pattern predicted from MU's re-interpretations is shown with an asterisk.",label="tab:patterns")
+@
 
-MU, however, present a second interpretation of ``confidence'', which is the technical, frequentist definition of ``confidence.'' We argued that this can only refer to the procedure and not to the specific interval. MU assert that ``by this argument, a correct interpretation of a CI can never mention the numerical bounds of the CI that are computed from the sample. But such an argument is clearly inconsistent with [Neyman's] stated purpose of CIs...'' (p. 12). MU's assertion here is not true; the bounds can be mentioned, but only as part of the {\em decision} entailed by the procedure to act as though the parameter is in the interval, {\em not} as an interpretation in terms confidence or probability. MU's assertion is also incorrect as an interpretation of Neyman's purpose for CIs. Notice that \citet{Neyman:1937} does not say that the analyst should be 95\% ``confident'' that the interval contains the parameter; he says that the analyst should state (and act as though) the parameter is {\em definitely in the interval.} \citet{Neyman:1941} makes this very clear:
+Consider the seven response patterns that have at least as much endorsement as MU's predicted pattern. Of these, five include endorsements of statement~6. Five do {\em not} include statement~5. MU argue that ``HMRW's participants may have interpreted statement~5 in the same way as the mathematical statisticians [and hence endorse it].''  
+In the sample, 63\% of non-students endorsed nonsensical statement~6 that everyone --- including mathematical statisticians --- should reject, compared to 53\% who accept statement~5. Moreover, rejecting statement~6 was only mildly predictive of accepting statement~5; non-student respondents who rejected statement~6 accepted statement~5 61\% of the time, while non-student respondents who accepted statement~6 accepted statement~5 half of the time (correlation $\phi=-.11$). Accepting statement~4 was only mildly predictive of accepting statement~5 (correlation $\phi=.18$) even though, on MU's analysis, the two statements have the same content. There does not appear to be evidence of any consistent interpretation in the data, including the one MU suggest.
 
-\begin{quote}
-``[I]t is not suggested that we can `conclude' that [the interval contains $\mu$], nor that we should `believe' that [the interval contains $\mu$]...[we] decide to behave as if we actually knew that the true value [is in the interval]. This is done as a result of our decision and has nothing to do with `reasoning' or `conclusion'. The reasoning ended when the [CI procedure was derived]. The above process [of using CIs] is also devoid of any `belief' concerning the value [...] of [$\mu$].'' (p. 133-134)
-\end{quote}
+Overall, an analysis of the data reveals little evidence that the survey respondents were interpreting CIs in the way MU suggest they might have been. MU offer no empirical evidence to support their contentions about what the participants might be thinking. The only evidence they offer in their response to HMRW is thought experiments with coins and cards. They imply that readers' endorsement of their interpretation of these thought experiment supports their contention that people use their interpretation of probability; however, their thought experiments can be easily understood using Bayesian probability, and are hence not diagnostic.
 
-The level of confidence is an assertion about the procedure, as Neyman repeatedly stated. If there were any definitions of ``confidence'' that would render statement~5 acceptable, they would have to be consistent with non-unique assignments of confidence, due to the reference class problem. Unlike with ``probability,'' however, there is no rule saying that we cannot have non-unique ``confidence,'' if we allow confidence to mean anything we like. This may save statement~5, but it also means that any other similar statements with ``confidence'' other than 95\% would also be simultaneously implied. So statement~5 is either not true, or trivially true because any such statement would be true. To the extent that respondents would not also have endorsed the statement that ``We can be 1\% confident that the true mean lies between 0.1 and 0.4,'' they lack a justification for statement 5. To the extent that they would have simultaneously endorsed all such statements, the assessment of confidence carries no information and is hence meaningless. We, like MU, suspect that an endorsement of statement~5 was not actually an endorsement of the claim that CIs are meaningless, and so it must lack justification from the information given and hence be incorrect.
+The data do, however, offer more evidence that participants' interpretations of confidence intervals reflect a lack of knowledge. Consider the necessary relationship between statements~1 and~4. Statement~1 was:
+\begin{namedtheorem}[1 (HMRW)]
+The probability that the true mean is greater than 0 is at least 95\%.
+\end{namedtheorem}
+and statement~4 was:
+\begin{namedtheorem}[4 (HMRW)]
+There is a 95\% probability that the true mean lies between 0.1 and 0.4.
+\end{namedtheorem}
+Both statements make use of the word ``probability''. Regardless of the interpretation of the word probability, the {\em laws} of probability must be respected. Assuming that respondents are interpreting the word probability consistently across questions, an endorsement of statement~4 implies that one must endorse statement~1: if the probability that the true mean is in $[.1,.4]$ is 95\%, then there is {\em at least} a 95\% probability that the true mean is greater than 0, since all values in the CI are greater than 0. However, of non-students who endorsed statement~4, only 51\% endorsed statement~1. The responses are demonstrably internally inconsistent. In sum, responses patterns are highly varied, and often violate the laws of probability, even among experienced researchers. The most parsimonious explanation, by far, is that the survey responses indicate severe misunderstanding of CIs (and indeed, probability broadly).
 
-\section{Misplaced faith}
+One possible objection to the survey raised in review is that the survey contained no correct response, and hence might be seen as a ``trick'' survey. Respondents may have been confused, expecting there to be at least one right answer. In response, we note that only 8\% of respondents endorsed a single item, and a majority endorsed four or more items. We see no reason why confusion about there being no right answer would cause respondents to respond with more than one endorsement, much less four or more. Further, we note that CIs are considered a basic tool for researchers, taught from the first year of statistical training, used throughout the literature, and heavily promoted by statistical reformers as intuitive. If understanding of CIs is so fragile that merely leaving out a correct answer yields highly varied, internally inconsistent response patterns, this actually bolsters our case that CIs are badly misunderstood.
 
-MU cite others who present statement 5 as the interpretation of a CI to support their case that this interpretation must be correct. They consider it ``implausible that such well-established mathematical statisticians do not understand CIs''. MU are right that many papers and textbooks show interpretations of CIs which we would consider incorrect, and some are indeed written by well-known statisticians. Given the previous demonstrations that p values are often misinterpreted \citep[e.g.,][]{Haller:Krauss:2002}, it should come as no surprise that CIs are also misinterpreted. Moreover, as previously mentioned, theoreticians such as Dempster seemed to be aware that even mathematical statisticians could have trouble interpreting confidence intervals contrast this with MU's statement that ``it is implausible that such well-established mathematical statisticians do not understand CIs.'' Dempster apparently thought that these misunderstandings were widespread and important enough to emphasize. In fact, the issues with confidence interval interpretation are well-known among writers in statistics. \citet[][pp. 211-215]{Neyman:1952} presents a humorous, fictional dialogue in which an ``eminent elderly statistician'' has great difficulty understanding confidence intervals. \citet{Mayo:1981}, critiquing a paper by Seidenfeld --- one of the leading figures in the philosophy of probability --- writes that ``while confidence levels are often (wrongly) interpreted as providing [...] a measure of [certainty that the parameter is in the interval], no such interpretation is warranted. Admittedly, such a misinterpretation is encouraged by the word `confidence'.'' Neyman, Dempster, and Mayo do not take it for granted that statisticians understand confidence intervals; we see no reason why MU should take it for granted either. If the interpretations MU give are demonstrably problematic --- and they are, as we show and as even a cursory reading of the theoretical CI literature will affirm --- then this argument carries no weight. It amounts to a mistaken argument from authority.
+\section{Conclusion}
 
-There are many plausible explanations why textbook authors would include incorrect statements about CIs. The most obvious one is that CIs are indeed very hard to grasp, even for statisticians, which is underscored by this very discussion. Some authors explicitly struggle with the discrepancy between use of CIs in practice and the theory behind it. \citet{Howell:2013}, for example, states that ``So what it does it mean to say that the 95\% confidence interval is $1,219 \leq \mu \leq 1,707$? For seven editions of each of two books I have worried and fussed about this question'' (p. 193). Moreover, textbooks authors may ``simplify'' the interpretation for didactic reasons, because they think the correct interpretation is too difficult to understand for students. Readers, after all, often do not appreciate difficult explanations. It is reasonable to think that textbooks suffer from the same problem as science journalism \citep{Ransohoff:Ransohoff:2001}: textbook authors are rewarded for the apparent clarity that often arises from oversimplification, not necessarily for correctness. Finally, textbook authors may try to connect to what is typically assumed in practice, rather than what is theoretically correct. An attention to correctness is often assumed to indicate a lack of ``pragmatism'' when what is widely believed is different from what is correct.
-
-	In summary, the alternative interpretations MU presented are unlikely, and, more importantly, that they are incorrect independent of the definition of probability. For these reasons, all six statements in our questionnaire are false, and the main conclusion that apparently researchers find it hard to interpret CIs remains valid. This conclusion is underscored by the fact that the two items that MU would consider false as well were endorsed in similar proportions as those items who MU thought were correct, and by the fact that MU defended several of these false statements. Our finding may be shocking given the heavy endorsement of CIs in the last few decades, but apparently even methodologists have difficulty agreeing that all the items were presented were false. Finding consensus among researchers might probably have been an even more surprising finding.
+MU's reasons for asserting the appropriateness of the statements on HMRW's survey do not hold. The reference class problem prevents any unique association of individual observed intervals with long-run frequencies. HMRW's data provide ample evidence of misinterpretations of confidence intervals; responses were highly varied, uncorrelated with expertise, and often violate the laws of probability under any interpretation. Finally, the data are not consistent with how MU suggest participants may have been responding. The main conclusion of HMRW --- that researchers have robust misunderstandings of confidence intervals --- is sound. Confidence intervals are poorly understood not only by students and researchers, but also by methodologists such as MU who have given the matter considerable thought \citep[see also][]{Morey:etal:unpublished}. This widespread lack of understanding, even among experts, should raise doubt about whether the widespread advocacy of confidence intervals is backed by a solid theoretical foundation.
 
 \printbibliography
 
