@@ -3,4 +3,4 @@ The second draft of a response to Miller and Ulrich's "Interpreting Confidence i
 
 This draft makes use of data from Hoekstra, Morey, Rouder, and Wagenmakers (2014). Please contact Rink Hoekstra (r.hoekstra@rug.nl) for information about obtaining this data set.
 
-DOI for citing version 0.1: [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.19212.svg)](http://dx.doi.org/10.5281/zenodo.19212)
+DOI for citing version 0.2: [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.30916.svg)](http://dx.doi.org/10.5281/zenodo.30916)
