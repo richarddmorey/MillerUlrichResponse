@@ -85,37 +85,10 @@ library(xtable)
 set.seed(1234)
 
 ## Load data
-library(xlsx)
-
-data = read.csv('../../RM_analysis/RM.Dec4.2012.csv')
-colnames(data) = c("Q1","Q2","Q3","Q4","Q5","Q6","expertise")
-data$group = "GroningenFaculty"
-
-
-
-resTil <- read.xlsx("../../Vragenlijst CI EJ/Vragenlijst CI docenten tilburg.xlsx", 1)
-resUvAStudents <- read.xlsx("../../Vragenlijst CI EJ/Vragenlijst CI eerstejaars.xlsx", 1)
-resUvAFac <- read.xlsx("../../Vragenlijst CI EJ/Vragenlijst CI medewerkers UvA.xlsx", 1)
-resUvAMaster <- read.xlsx("../../Vragenlijst CI EJ/Vragenlijst CI studenten SWaP.xlsx", 1)
-# Add group column (replace the notes)
-resTil[,8] = "TilburgFaculty"
-resUvAStudents[,8] = "UvAStudents"
-resUvAFac[,8] = "UvAFaculty"
-resUvAMaster[,8] = "UvAMasters"
-# Make column names
-
-colnames(resTil) = colnames(data)
-colnames(resUvAStudents) = colnames(data)
-colnames(resUvAFac) = colnames(data)
-colnames(resUvAMaster) = colnames(data)
-
-allEJ <- rbind(resTil,resUvAStudents,resUvAFac,resUvAMaster)
-data <- rbind(data,allEJ)
+data = read.csv('HoekstraEtAl2014.data.csv',header = TRUE)
 
 # Remove anyone who has NSs in the first 6 cols
 data <- data[rowSums(is.na(data[,1:6]))==0,]
-
-data$Nendorsed = rowSums(data[,1:6])
 
 dataNoStudents = data[data$group!="UvAStudents",]
 
